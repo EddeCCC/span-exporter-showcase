@@ -1,0 +1,103 @@
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+    id "com.palantir.docker" version "${palantirDockerVersion}"
+    id "org.cyclonedx.bom" version "${cyclonedxBomVersion}"
+    id "io.spring.dependency-management" version "${springDependencyManangementVersion}"
+    id "org.owasp.dependencycheck" version "${owaspDependencyCheckVersion}"
+    id "com.github.ben-manes.versions" version "${versionsPlugin}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: "java"
+apply plugin: "jacoco"
+
+group = "rocks.inspectit.ocelot"
+
+java {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
+if (!project.hasProperty("buildVersion") || project.getProperty("buildVersion").empty) {
+    ext.buildVersion = "SNAPSHOT"
+}
+
+version = "$buildVersion"
+
+
+bootJar {
+
+    archiveVersion = "${buildVersion}"
+
+    base {
+        archivesName = "inspectit-ocelot-eum-server"
+    }
+
+    manifest {
+        attributes "Start-Class": "rocks.inspectit.oce.eum.server.EUMServerApplication"
+    }
+
+}
+
+cyclonedxBom {
+    includeConfigs = ["runtimeClasspath"]
+    schemaVersion = "1.4"
+    projectType = "application"
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        exceptionFormat = "full"
+    }
+}
+
+dependencies {
+    implementation(
+            "org.springframework.boot:spring-boot-starter-web",
+            "org.springframework.boot:spring-boot-starter-actuator",
+            "org.springframework.boot:spring-boot-starter-validation",
+
+            "org.yaml:snakeyaml:${snakeYamlVersion}",
+            // Has to be included, but is transitive to spring
+            "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
+
+            "io.opencensus:opencensus-api:${openCensusVersion}",
+
+            "io.grpc:grpc-context:${grpcVersion}",
+
+            platform("io.opentelemetry:opentelemetry-bom-alpha:${openTelemetryAlphaVersion}"),
+            platform("io.opentelemetry:opentelemetry-bom:${openTelemetryVersion}"),
+            "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}",
+            "io.opentelemetry:opentelemetry-exporter-otlp:${openTelemetryVersion}",
+            "io.opentelemetry:opentelemetry-exporter-jaeger:${openTelemetryVersion}",
+            "io.opentelemetry:opentelemetry-exporter-jaeger-thrift:${openTelemetryVersion}",
+            "io.opentelemetry:opentelemetry-semconv:${openTelemetryAlphaVersion}",
+            "io.opentelemetry.proto:opentelemetry-proto:${openTelemetryProtoVersion}",
+
+            "com.google.protobuf:protobuf-java:${protobufVersion}",
+            "com.google.protobuf:protobuf-java-util:${protobufVersion}",
+    )
+
+    compileOnly "org.projectlombok:lombok"
+    annotationProcessor "org.projectlombok:lombok"
+
+    testImplementation(
+            "org.springframework.boot:spring-boot-starter-test",
+            "org.apache.httpcomponents:httpclient:${httpClientVersion}",
+
+            // ServerExtension
+            "com.linecorp.armeria:armeria-junit5:${armeriaVersion}",
+            "com.linecorp.armeria:armeria-grpc-protocol:${armeriaVersion}",
+
+            // for docker test containers
+            "org.testcontainers:testcontainers:${testContainersVersion}",
+            "org.testcontainers:junit-jupiter:${testContainersVersion}"
+    )
+
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+}

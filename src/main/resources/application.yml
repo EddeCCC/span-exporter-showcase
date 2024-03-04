@@ -1,0 +1,43 @@
+inspectit-eum-server:
+  exporters:
+    tracing:
+      otlp:
+        # If OTLP exporter for the OT received spans is enabled.
+        enabled: IF_CONFIGURED
+        # the URL endpoint, e.g., http://127.0.0.1:4317
+        endpoint: null
+        # the transport protocol, e.g., 'http/thrift' or 'grpc'
+        protocol: grpc
+        # headers
+        headers: { }
+        # compression method
+        compression: NONE
+        # timeout, i.e., maximum time the OTLP exporter will wait for each batch export
+        timeout: 10s
+
+      # service name for all exported spans.
+      service-name: browser-js
+
+# SERVER properties
+# Avoid exposing internals to outside via error page
+server:
+  error:
+    include-stacktrace: never
+    include-binding-errors: never
+    include-message: never
+    whitelabel:
+      enabled: false
+
+# ACTUATOR PROPERTIES
+management:
+  # Whether to enable or disable all endpoints by default.
+  endpoints.enabled-by-default: false
+  endpoint:
+    # Whether to enable the health endpoint.
+    health.enabled: true
+
+spring:
+  autoconfigure:
+    # Disable ErrorMvcAutoConfiguration to avoid nasty exceptions if whitelabel error page is disabled
+    # https://github.com/spring-projects/spring-boot/issues/2001
+    exclude: org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
